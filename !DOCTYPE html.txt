@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Score Brazzo - Performance Andreta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior-y: contain;
+            background-color: #f8fafc;
+        }
+        .font-racing { font-family: 'Orbitron', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .glass-nav { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+    </style>
+</head>
+<body class="text-slate-900 overflow-x-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+
+        const Icons = {
+            Home: ({active}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            ),
+            Trophy: ({active}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            ),
+            Calculator: ({active}) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="8" x2="16" y1="10" y2="10"/><line x1="10" x2="10" y1="14" y2="18"/><line x1="8" x2="12" y1="16" y2="16"/><line x1="14" x2="14" y1="14" y2="18"/></svg>
+            ),
+            Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+            Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
+            Minus: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>
+        };
+
+        const PREMIOS = [
+            { id: 1, desc: 'BOLSA TÉRMICA COOLER 12 LATAS', pontos: 275, cat: 'Lazer', img: 'BOLSA TÉRMICA COOLER 12 LATAS.png' },
+            { id: 2, desc: 'BONE 06 GOMOS PRETO GRUPO REVISE', pontos: 248, cat: 'Vestuário', img: 'BONE 06 GOMOS PRETO GRUPO REVISE.png' },
+            { id: 3, desc: 'CAIXA DE SOM BRAZZO', pontos: 1659, cat: 'Tech', img: 'CAIXA DE SOM BRAZZO.png' },
+            { id: 4, desc: 'CAMISETA BRAZZO RACING 2024 P', pontos: 400, cat: 'Vestuário', img: 'CAMISETA BRAZZO RACING 2024 P.png' },
+            { id: 5, desc: 'CAMISETA POLO BRAZZO MASCULINA', pontos: 450, cat: 'Vestuário', img: 'CAMISETA POLO BRAZZO MASCULINA - CINZA.png' },
+            { id: 6, desc: 'CARREGADOR MAGNETICO POR INDUCAO', pontos: 1100, cat: 'Tech', img: 'CARREGADOR MAGNETICO SEM FIO POR INDUCAO.png' },
+            { id: 7, desc: 'FONE BLUETOOTH PEINING', pontos: 1540, cat: 'Tech', img: 'FONE BLUETOOTH PEINING.png' },
+            { id: 8, desc: 'FONE DE OUVIDO TWS KAIDI', pontos: 613, cat: 'Tech', img: 'FONE DE OUVIDO BLUETOOTH TWS KAIDI.png' },
+            { id: 9, desc: 'KIT CHURRASCO BRAZZO COM TABUA', pontos: 528, cat: 'Lazer', img: 'KIT CHURRASCO BRAZZO COM TABUA.png' },
+            { id: 10, desc: 'KIT JOGOS 9 (BARALHOS E DADOS)', pontos: 759, cat: 'Lazer', img: 'KIT JOGOS 9 COM 2 BARALHOS E DADOS.png' },
+            { id: 11, desc: 'MOCHILA KROSS ELEGANCE STYLE', pontos: 981, cat: 'Executivo', img: 'https://placehold.co/400x400/0f172a/white?text=Mochila' },
+            { id: 12, desc: 'SMARTWATCH ZW', pontos: 2259, cat: 'Tech', img: 'https://placehold.co/400x400/0f172a/white?text=Smartwatch' }
+        ];
+
+        const METRICAS = [
+            { id: '1350113', nome: 'LIMPA BICO FLEX TANQUE', pontos: 10 },
+            { id: '1300531', nome: 'KIT LUBRIFICACAO - 07', pontos: 2 },
+            { id: '1350254', nome: 'ESPUMA ANTISSÉPTICA 50ML', pontos: 8 },
+            { id: '9300606', nome: 'PROTETOR DE POLOS', pontos: 4 },
+            { id: '0771016', nome: 'BIO-AIR HIGIENIZADOR', pontos: 15 },
+            { id: '1350351', nome: 'PASTA COBREADA', pontos: 12 },
+            { id: '1350352', nome: 'DPM-500 DESENGRAXANTE', pontos: 20 }
+        ];
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('home');
+            const [searchTerm, setSearchTerm] = useState('');
+            const [simulation, setSimulation] = useState({});
+
+            const totalPoints = useMemo(() => {
+                return METRICAS.reduce((acc, curr) => acc + (curr.pontos * (simulation[curr.id] || 0)), 0);
+            }, [simulation]);
+
+            const filteredPremios = useMemo(() => {
+                return PREMIOS.filter(p => p.desc.toLowerCase().includes(searchTerm.toLowerCase()));
+            }, [searchTerm]);
+
+            const handleSimulate = (id, val) => {
+                const numericValue = parseInt(val || 0);
+                setSimulation(prev => ({ ...prev, [id]: Math.max(0, numericValue) }));
+            };
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen bg-slate-50 flex flex-col relative">
+                    <header className="px-6 py-6 bg-white flex justify-between items-center border-b border-slate-100 sticky top-0 z-40">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg transform -rotate-6">
+                                <span className="text-white font-black italic text-xl">B</span>
+                            </div>
+                            <div>
+                                <h1 className="text-lg font-black italic uppercase leading-none tracking-tighter">Score Brazzo</h1>
+                                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest italic">Performance Andreta</span>
+                            </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 px-4 py-6 mb-24 overflow-y-auto no-scrollbar">
+                        {activeTab === 'home' && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
+                                    <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/20 blur-[80px] rounded-full"></div>
+                                    <div className="relative z-10 text-center">
+                                        <p className="text-[10px] font-black uppercase text-blue-400 italic mb-1 tracking-widest">Saldo de Performance</p>
+                                        <div className="flex items-baseline justify-center gap-2 mb-6">
+                                            <span className="text-7xl font-black font-racing tracking-tighter">0</span>
+                                            <span className="text-sm font-bold uppercase text-slate-400 italic">pts</span>
+                                        </div>
+                                        <div className="bg-white/10 p-4 rounded-2xl border border-white/5 flex items-center gap-4 text-left">
+                                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black text-xs shrink-0">!</div>
+                                            <p className="text-[10px] font-bold leading-tight opacity-80 uppercase tracking-wider">Acelere nos combos técnicos e suba sua pontuação!</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {PREMIOS.slice(0, 4).map(p => (
+                                        <div key={p.id} className="bg-white p-3 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col">
+                                            <div className="aspect-square bg-slate-50 rounded-2xl mb-3 overflow-hidden">
+                                                <img src={p.img} alt={p.desc} className="w-full h-full object-cover" onError={(e) => { e.target.src = "https://placehold.co/200x200/e2e8f0/64748b?text=Brazzo"; }} />
+                                            </div>
+                                            <p className="text-[10px] font-bold text-slate-800 leading-tight italic truncate mb-2">{p.desc.replace('BRAZZO', '')}</p>
+                                            <span className="text-xs font-black font-racing text-slate-900">{p.pontos} <span className="text-[8px] italic opacity-40 uppercase">pts</span></span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'premios' && (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3 sticky top-[80px] z-10">
+                                    <Icons.Search />
+                                    <input type="text" placeholder="Pesquisar prêmio..." className="w-full outline-none font-bold text-sm bg-transparent" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {filteredPremios.map(p => (
+                                        <div key={p.id} className="bg-white p-4 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col">
+                                            <div className="aspect-square rounded-2xl mb-4 overflow-hidden bg-slate-50 border border-slate-50">
+                                                <img src={p.img} alt={p.desc} className="w-full h-full object-cover" onError={(e) => { e.target.src = "https://placehold.co/400x400/e2e8f0/64748b?text=Brazzo"; }} />
+                                            </div>
+                                            <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest mb-1">{p.cat}</p>
+                                            <h4 className="text-[10px] font-black text-slate-800 uppercase italic h-8 leading-tight line-clamp-2 mb-3 tracking-tighter">{p.desc.replace('BRAZZO', '')}</h4>
+                                            <div className="mt-auto pt-3 border-t border-slate-50 flex items-center justify-between">
+                                                <div className="flex items-baseline">
+                                                    <span className="text-xl font-black font-racing tracking-tighter text-slate-950">{p.pontos}</span>
+                                                    <span className="text-[7px] font-bold ml-0.5 text-slate-400 uppercase italic">pts</span>
+                                                </div>
+                                                <div className="bg-slate-100 p-1.5 rounded-lg text-slate-300"><Icons.Plus /></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'simulador' && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
+                                <div className="bg-blue-600 rounded-[2.5rem] py-12 px-8 text-white shadow-xl shadow-blue-200 text-center relative overflow-hidden">
+                                    <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 blur-[50px] rounded-full"></div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] italic mb-2 opacity-80">Simulador de Ganhos</p>
+                                    <div className="text-6xl font-black font-racing italic tracking-tighter">+{totalPoints}</div>
+                                    <p className="text-[9px] font-bold uppercase mt-4 italic opacity-70 tracking-widest">Aumente sua produtividade</p>
+                                </div>
+                                <div className="bg-white rounded-[2.5rem] p-6 border border-slate-200 shadow-sm">
+                                    <h4 className="font-black text-slate-800 uppercase italic mb-8 text-xs flex items-center gap-2">
+                                        <div className="w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(251,191,36,0.6)]"></div> Oportunidades Diárias
+                                    </h4>
+                                    <div className="space-y-8">
+                                        {METRICAS.map(item => (
+                                            <div key={item.id} className="flex items-center justify-between gap-4">
+                                                <div className="flex-1">
+                                                    <p className="font-black text-slate-800 text-[10px] uppercase leading-none mb-1.5 italic tracking-tight">{item.nome}</p>
+                                                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">{item.pontos} Pts / Un</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl">
+                                                    <button onClick={() => handleSimulate(item.id, (simulation[item.id] || 0) - 1)} className="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center font-black text-slate-400 active:scale-90 transition-all"><Icons.Minus /></button>
+                                                    <input type="number" value={simulation[item.id] || ''} onChange={(e) => handleSimulate(item.id, e.target.value)} placeholder="0" className="w-8 text-center font-black text-base outline-none bg-transparent py-1.5 text-blue-600" />
+                                                    <button onClick={() => handleSimulate(item.id, (simulation[item.id] || 0) + 1)} className="w-9 h-9 rounded-lg bg-slate-900 text-white flex items-center justify-center active:scale-90 transition-all shadow-md"><Icons.Plus /></button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button onClick={() => setSimulation({})} className="w-full mt-10 py-3 text-[10px] font-black uppercase text-slate-300 border border-slate-100 rounded-xl hover:text-red-400 transition-colors">Limpar Simulador</button>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    <nav className="fixed bottom-0 left-0 right-0 glass-nav border-t border-white/5 safe-bottom z-50 rounded-t-3xl">
+                        <div className="max-w-md mx-auto flex justify-around items-center px-4 py-4">
+                            <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'home' ? 'text-blue-500 scale-110' : 'text-slate-500'}`}>
+                                <Icons.Home active={activeTab === 'home'} />
+                                <span className="text-[8px] font-black uppercase italic tracking-[0.15em]">Home</span>
+                            </button>
+                            <button onClick={() => setActiveTab('premios')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'premios' ? 'text-blue-500 scale-110' : 'text-slate-500'}`}>
+                                <Icons.Trophy active={activeTab === 'premios'} />
+                                <span className="text-[8px] font-black uppercase italic tracking-[0.15em]">Prêmios</span>
+                            </button>
+                            <button onClick={() => setActiveTab('simulador')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'simulador' ? 'text-blue-500 scale-110' : 'text-slate-500'}`}>
+                                <Icons.Calculator active={activeTab === 'simulador'} />
+                                <span className="text-[8px] font-black uppercase italic tracking-[0.15em]">Simular</span>
+                            </button>
+                        </div>
+                    </nav>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
